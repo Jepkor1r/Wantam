@@ -322,7 +322,7 @@ One long-running agent, not a chatbot FAQ. Tool-calling. One clarifying question
 
 ## 8. System architecture
 
-**Scaled, multi-channel design (source of truth):** [ARCHITECTURE.md](./ARCHITECTURE.md) — WhatsApp, SMS, email, web, POS/CSV, M-Pesa; Hono + Next.js + Postgres; agent drafts, outbox sends.
+**Scaled, multi-channel design (source of truth):** [ARCHITECTURE.md](../ARCHITECTURE.md) — WhatsApp, SMS, email, web, POS/CSV, M-Pesa; Hono + Next.js + Postgres; agent drafts, outbox sends.
 
 Build Night still demos the WhatsApp loop below. Product-wise, WhatsApp is one adapter: the same events arrive from email, SMS, till files, and a dashboard.
 
@@ -438,7 +438,7 @@ Duka is a **file for a human officer**, not a licensed bureau and not a loan dec
 | Credit snapshot on the board | Longer history scoring | Data-broker audiences |
 | One savings NDIO on an up-week | Recurring auto-save | Silent customer messaging |
 
-**Suggested stack:** WhatsApp Cloud API · Groq Whisper · LLM agent · Postgres on **Render** · **Brevo** email · Next.js board. Full layout: [ARCHITECTURE.md](./ARCHITECTURE.md).
+**Suggested stack:** WhatsApp Cloud API · Groq Whisper · LLM agent · Postgres on **Render** · **Brevo** email · Next.js board. Full layout: [ARCHITECTURE.md](../ARCHITECTURE.md).
 
 **Developer-tools angle:** open-source Swahili commerce intents (SKU aliases, stock verbs, follow-up templates) and a Cursor skill so others fork Duka for ugali, mitumba, or boda parts.
 

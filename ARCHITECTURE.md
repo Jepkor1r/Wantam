@@ -2,7 +2,7 @@
 
 **Wantam / Duka** · channel-agnostic shop operating system  
 Scale: mama mboga → kiosk → supermarket aisle → multi-branch retail  
-Companion to product intent in [Duka-PRD.md](./Duka-PRD.md)
+Companion to product intent in [docs/Duka-PRD.md](./docs/Duka-PRD.md)
 
 WhatsApp is **one adapter**, not the product. Email, SMS, voice, till files, POS, and bank/M-Pesa payloads all become the same shop events. The agent drafts; rules score; humans (or policy) send.
 
