@@ -22,4 +22,5 @@ Scalable system design and stack: **[ARCHITECTURE.md](./ARCHITECTURE.md)** (emai
 
 ## Repo
 
+- App: [`apps/web`](./apps/web) — Next.js board in the Flying Papers poster system
 - [github.com/Jepkor1r/Wantam](https://github.com/Jepkor1r/Wantam)
