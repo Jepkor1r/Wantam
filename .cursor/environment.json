@@ -1,0 +1,11 @@
+{
+  "name": "Wantam Duka",
+  "install": "pnpm install",
+  "start": "pnpm --filter @wantam/api start",
+  "terminals": [
+    {
+      "name": "board",
+      "command": "pnpm --filter @wantam/board dev"
+    }
+  ]
+}
