@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Flying Papers — style on Duka</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Anybody:wdth,wght@125,800;125,900&family=Inter:wght@400;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --color-dusk-violet: #8584bd;
+      --color-hi-vis-yellow: #f4ed36;
+      --color-buttery-yellow: #f9cc73;
+      --color-lilac-shadow: #61609a;
+      --color-bubblegum-pink: #f8c1ba;
+      --color-matcha-cream: #b5c995;
+      --color-magenta-punch: #ac4f98;
+      --color-firecracker-red: #c94245;
+      --color-bone-white: #f9f5f2;
+      --color-ink-black: #1a1a1a;
+      --color-pure-black: #000000;
+
+      --font-display: "Anybody", ui-sans-serif, system-ui, sans-serif;
+      --font-ui: "Inter", ui-sans-serif, system-ui, sans-serif;
+      --font-mono: "JetBrains Mono", ui-monospace, monospace;
+
+      --radius-cards: 6px;
+      --radius-buttons: 100px;
+      --card-padding: 17px;
+      --element-gap: 17px;
+      --section-gap: 40px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { background: var(--color-dusk-violet); color: var(--color-bone-white); }
+    body { font-family: var(--font-ui); }
+
+    .nav {
+      padding: 17px;
+      text-align: center;
+      font-family: var(--font-display);
+      font-weight: 800;
+      font-size: 30px;
+      letter-spacing: 0.02em;
+      color: var(--color-hi-vis-yellow);
+      font-variation-settings: "wdth" 125;
+    }
+
+    .hero {
+      min-height: 100vh;
+      padding: 0 20px 80px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .headline {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: clamp(64px, 14vw, 184px);
+      line-height: 0.82;
+      letter-spacing: 0.02em;
+      text-align: center;
+      font-variation-settings: "wdth" 125;
+      max-width: none;
+      position: relative;
+      z-index: 2;
+    }
+
+    .headline .hi { color: var(--color-hi-vis-yellow); }
+    .headline .butter { color: var(--color-buttery-yellow); }
+
+    .mascot {
+      position: absolute;
+      width: min(42vw, 340px);
+      top: 42%;
+      left: 50%;
+      transform: translate(-50%, -18%);
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .actions {
+      margin-top: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 17px;
+      z-index: 2;
+      position: relative;
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 2px solid var(--color-hi-vis-yellow);
+      color: var(--color-hi-vis-yellow);
+      border-radius: var(--radius-buttons);
+      padding: 12px 17px;
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+    }
+
+    .btn-pill {
+      background: var(--color-bone-white);
+      color: var(--color-pure-black);
+      border: none;
+      border-radius: var(--radius-buttons);
+      padding: 12px 17px;
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 0.05em;
+      cursor: pointer;
+    }
+
+    .link-underline {
+      color: var(--color-bone-white);
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 0.8;
+      text-underline-offset: 3px;
+    }
+
+    .section {
+      padding: 0 20px var(--section-gap);
+      max-width: 1100px;
+      margin: 0 auto;
+    }
+
+    .mono {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 0.8;
+      letter-spacing: 0.05em;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 40px;
+    }
+
+    @media (max-width: 800px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      border-radius: var(--radius-cards);
+      padding: var(--card-padding);
+      min-height: 140px;
+    }
+
+    .card h3 {
+      font-family: var(--font-ui);
+      font-weight: 700;
+      font-size: 16px;
+      letter-spacing: 0.05em;
+      color: var(--color-ink-black);
+      margin: 12px 0 8px;
+    }
+
+    .card p {
+      font-family: var(--font-ui);
+      font-size: 16px;
+      line-height: 1;
+      letter-spacing: 0.8px;
+      color: var(--color-ink-black);
+    }
+
+    .pink { background: var(--color-bubblegum-pink); }
+    .matcha { background: var(--color-matcha-cream); }
+    .punch { background: var(--color-magenta-punch); }
+    .punch h3, .punch p, .punch .mono { color: var(--color-bone-white); }
+    .red { background: var(--color-firecracker-red); }
+    .red h3, .red p, .red .mono { color: var(--color-bone-white); }
+    .cream {
+      background: var(--color-bone-white);
+      color: var(--color-ink-black);
+    }
+    .lilac {
+      background: var(--color-lilac-shadow);
+      color: var(--color-bone-white);
+    }
+
+    .swatches {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 17px;
+      margin-top: 17px;
+    }
+
+    @media (max-width: 800px) {
+      .swatches { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    }
+
+    .swatch {
+      border-radius: var(--radius-cards);
+      min-height: 88px;
+      padding: 17px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 0.8;
+    }
+
+    .footer {
+      margin-top: 80px;
+      background: #375027;
+      color: var(--color-bone-white);
+      padding: 25px 20px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      line-height: 1;
+    }
+  </style>
+</head>
+<body>
+  <header class="nav">DUKA</header>
+
+  <section class="hero">
+    <svg class="mascot" viewBox="0 0 240 260" aria-hidden="true">
+      <ellipse cx="120" cy="248" rx="54" ry="8" fill="#61609a" />
+      <rect x="78" y="150" width="84" height="90" rx="6" fill="#f9f5f2" stroke="#000" stroke-width="3" />
+      <rect x="92" y="168" width="56" height="36" rx="4" fill="#f4ed36" stroke="#000" stroke-width="2.5" />
+      <circle cx="120" cy="108" r="48" fill="#f9f5f2" stroke="#000" stroke-width="3" />
+      <circle cx="104" cy="104" r="7" fill="#000" />
+      <circle cx="136" cy="104" r="7" fill="#000" />
+      <path d="M104 128 Q120 140 136 128" fill="none" stroke="#000" stroke-width="3" stroke-linecap="round" />
+      <polygon points="168,96 214,80 168,118" fill="#f4ed36" stroke="#000" stroke-width="3" />
+    </svg>
+    <h1 class="headline">
+      <span class="hi">SHELF.</span><br />
+      <span class="butter">TILL.</span><br />
+      <span class="hi">PING.</span>
+    </h1>
+    <div class="actions">
+      <button class="btn-outline" type="button">TUMA FOLLOW-UP</button>
+      <button class="btn-pill" type="button">OPEN THE BOARD</button>
+      <a class="link-underline" href="#board">skip the shout — see the cards</a>
+    </div>
+  </section>
+
+  <section class="section" id="board">
+    <p class="mono" style="margin-bottom: 17px; color: #f9f5f2;">ONE IDEA PER CARD · NO SHADOWS · VIOLET STAGE</p>
+    <div class="grid">
+      <article class="card matcha">
+        <span class="mono">SKU MIX</span>
+        <h3>MAYAI 40%</h3>
+        <p>Kuku 35%. Mahindi quiet.</p>
+      </article>
+      <article class="card cream">
+        <span class="mono">REPEAT</span>
+        <h3>AMINA · EGGS</h3>
+        <p>Three weeks. This week? Ghost.</p>
+      </article>
+      <article class="card lilac">
+        <span class="mono">CREDIT FILE</span>
+        <h3>72 / 100</h3>
+        <p>Ready with notes. No names.</p>
+      </article>
+    </div>
+  </section>
+
+  <section class="section" style="margin-top: 40px;">
+    <div class="card cream">
+      <p class="mono" style="color: #1a1a1a;">PALETTE</p>
+      <div class="swatches">
+        <div class="swatch" style="background:#8584bd;color:#f9f5f2">Dusk Violet<br /><br />#8584bd</div>
+        <div class="swatch" style="background:#f4ed36;color:#000">Hi-Vis Yellow<br /><br />#f4ed36</div>
+        <div class="swatch" style="background:#f9cc73;color:#000">Buttery Yellow<br /><br />#f9cc73</div>
+        <div class="swatch" style="background:#61609a;color:#f9f5f2">Lilac Shadow<br /><br />#61609a</div>
+        <div class="swatch" style="background:#f8c1ba;color:#1a1a1a">Bubblegum Pink<br /><br />#f8c1ba</div>
+        <div class="swatch" style="background:#b5c995;color:#1a1a1a">Matcha Cream<br /><br />#b5c995</div>
+        <div class="swatch" style="background:#ac4f98;color:#f9f5f2">Magenta Punch<br /><br />#ac4f98</div>
+        <div class="swatch" style="background:#c94245;color:#f9f5f2">Firecracker Red<br /><br />#c94245</div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="footer">
+    Flying Papers tokens · Duka preview · Anybody / Inter / JetBrains Mono substitutes · Next.js can ship this as CSS
+  </footer>
+</body>
+</html>

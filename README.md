@@ -1,11 +1,28 @@
 # Wantam — Duka
 
-Local folder: `C:\Users\USER\projects\Wantam`  
+**Shop operating system for informal and formal retail.**  
+Cursor Kenya Build Night.
+
+Voice, SMS, email, till files, POS, and M-Pesa all become the same shop events. WhatsApp is one channel, not the product. Purchase history shows what walked out the door. The shop agent drafts follow-ups on WhatsApp, SMS, and email. Weekly insights tell the owner what made money. The same history becomes a micro-credit readiness file a SACCO officer can read.
+
 Remote: [github.com/Jepkor1r/Wantam](https://github.com/Jepkor1r/Wantam)
 
-**WhatsApp shop manager for informal traders.** Cursor Kenya Build Night.
+## Run the app
 
-Voice notes keep stock honest. M-Pesa SMS keeps the books honest. Weekly insights tell the owner what made money. The same history becomes a SACCO-ready credit file.
+```bash
+pnpm install
+pnpm dev
+```
+
+- Judge board: [http://localhost:3000](http://localhost:3000)
+- Shop API: [http://localhost:3001/health](http://localhost:3001/health)
+- WhatsApp webhook: `POST http://localhost:3001/webhooks/whatsapp` (tunnel with ngrok)
+
+Copy `.env.example` to `.env` only when you have WhatsApp Cloud or Whisper keys.
+
+```bash
+pnpm test
+```
 
 ## Folder layout (this repo)
 
@@ -14,8 +31,10 @@ Wantam/
   docs/                 Product + stack
     Duka-PRD.md         Full PRD
     TECH-STACK.md       Stack broken down by section
+  ARCHITECTURE.md       Multi-channel system design (Brevo, Render)
   apps/
-    board/              Live judge dashboard (Next.js)
+    web/                Live dashboard (Next.js, Flying Papers)
+    board/              Judge-board notes
     api/                Shop agent + webhooks
   packages/
     db/                 SQLite + Drizzle schema
@@ -24,6 +43,7 @@ Wantam/
     whatsapp/           Cloud API adapter
     stt/                Whisper / Groq
     insights/           Best seller, costs, weekly rollup
+  design/               Poster / token preview
 ```
 
 ## Tech stack by section
@@ -37,18 +57,23 @@ Wantam/
 | 5. Shared | `packages/shared` | TypeScript types, SKU aliases |
 | 6. Insights | `services/insights` | SQL rollups + LLM copy |
 | 7. Credit + savings | `apps/api` | Pure TS scorer + nudge rules |
-| 8. Judge board | `apps/board` | Next.js 15, Tailwind, live updates |
+| 8. Judge board | `apps/web` | Next.js 15, Tailwind, live updates |
 | 9. Runtime | whole repo | Node 20, pnpm, TypeScript 5 |
 
 **Rule:** the LLM writes sentences. TypeScript writes numbers (stock, scores, whether to nudge).
 
 Full detail: **[docs/TECH-STACK.md](./docs/TECH-STACK.md)**  
-Requirements and demo: **[docs/Duka-PRD.md](./docs/Duka-PRD.md)**
+Requirements and demo: **[docs/Duka-PRD.md](./docs/Duka-PRD.md)**  
+System design: **[ARCHITECTURE.md](./ARCHITECTURE.md)** (email: **Brevo**, host: **Render**)
 
-## Product (short)
+## Product
 
-- Voice-first inventory (Swahili / Sheng)
-- Books from forwarded M-Pesa SMS (after NDIO)
+**Duka** runs a kiosk or a floor. Phone-first for a mama mboga; dashboard + POS ingest for a bigger retailer. Consent first.
+
+- Voice-first inventory (Swahili / Sheng) plus typed / CSV / POS
+- Books from M-Pesa SMS, later Daraja, email invoices, bank CSV
+- Behavioural purchase analytics (what sold, to whom, how often)
+- AI shop agent: stock, books, advertise + follow up (WhatsApp, SMS, email, later social captions)
 - Owner analytics (best seller, biggest cost, margin)
-- Micro-credit readiness file (trader must Share)
-- Savings nudges on a real up-week
+- Micro-credit readiness score (explainable, trader must Share)
+- Savings nudges tied to a restock goal
