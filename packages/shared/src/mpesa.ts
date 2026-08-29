@@ -46,7 +46,7 @@ export function categorizeLedger(input: {
 }): { category: string; skuId: string | null } {
   const blob = `${input.party} ${input.text}`.toLowerCase();
   if (/feed|mash|unga/.test(blob)) return { category: "feed", skuId: "feed" };
-  if (/egg|mayai/.test(blob)) return { category: "eggs", skuId: "mayai" };
+  if (/egg|mayai|amina/.test(blob)) return { category: "eggs", skuId: "mayai" };
   if (/kuku|chicken/.test(blob)) return { category: "poultry", skuId: "kuku" };
   if (/nyanya|tomato/.test(blob)) return { category: "produce", skuId: "tomato" };
   if (/mahindi|maize/.test(blob)) return { category: "produce", skuId: "mahindi" };

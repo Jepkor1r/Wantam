@@ -201,13 +201,13 @@ function handleSavingsReply(text: string): AgentReply | null {
   const save = db.select().from(savingsGoal).where(eq(savingsGoal.traderId, TRADER())).get();
   if (!save?.pendingNudge) return null;
   const t = text.trim().toUpperCase();
-  const amount = text.match(/(\d{2,6})/)?.[1];
+  const bareAmount = text.trim().match(/^(\d{2,6})$/);
   if (t === "HAPANA" || t === "NO") {
     db.update(savingsGoal).set({ pendingNudge: null }).where(eq(savingsGoal.id, save.id)).run();
     return reply("Sawa — hakuna kitu imewekwa.", ["savings"]);
   }
-  if (t === "NDIO" || t === "YES" || amount) {
-    const kes = amount ? Number(amount) : 500;
+  if (t === "NDIO" || t === "YES" || bareAmount) {
+    const kes = bareAmount ? Number(bareAmount[1]) : 500;
     db.update(savingsGoal)
       .set({ pendingNudge: null, balanceKes: save.balanceKes + kes })
       .where(eq(savingsGoal.id, save.id))
@@ -249,10 +249,11 @@ export function handleInboundText(text: string): AgentReply {
 
   if (/^share\b/i.test(text.trim())) return shareCredit();
 
+  if (looksLikeMpesa(text)) return postSms(text);
+
   const save = handleSavingsReply(text);
   if (save) return save;
 
-  if (looksLikeMpesa(text)) return postSms(text);
   return applyDeltas(text);
 }
 
