@@ -139,6 +139,29 @@ export function rebuildInsights(traderId: string) {
     });
   }
 
+  const sevenDays = Date.now() - 7 * 24 * 60 * 60 * 1000;
+  const skus = db.select().from(sku).where(eq(sku.traderId, traderId)).all();
+  const recentSales = new Set(
+    db
+      .select()
+      .from(ledgerEntry)
+      .where(eq(ledgerEntry.traderId, traderId))
+      .all()
+      .filter((r) => r.dir === "in" && r.skuId && r.at >= sevenDays)
+      .map((r) => r.skuId),
+  );
+  for (const s of skus) {
+    if (s.onHand > 0 && !recentSales.has(s.id)) {
+      cards.push({
+        type: "dead_stock",
+        payload: { skuId: s.id, onHand: s.onHand },
+        copySw: `${s.name} haijasonga — punguza order.`,
+        copyEn: `${s.name} has not moved in 7 days — cut the next order.`,
+      });
+      break;
+    }
+  }
+
   const briefingSw =
     wow.pct == null
       ? "Wiki hii: data bado inajenga."

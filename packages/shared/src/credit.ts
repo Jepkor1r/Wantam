@@ -37,7 +37,11 @@ export type SavingsHabit = {
 };
 
 /** Deterministic 0–100 scorer. The LLM never picks this number. */
-export function scoreCredit(weeks: WeekRoll[], savings: SavingsHabit): CreditResult {
+export function scoreCredit(
+  weeks: WeekRoll[],
+  savings: SavingsHabit,
+  extra?: { topCostShare?: number },
+): CreditResult {
   const qualifying = weeks.map(
     (w) => w.stockEvents >= 3 && w.moneyEvents >= 1,
   );
@@ -67,7 +71,8 @@ export function scoreCredit(weeks: WeekRoll[], savings: SavingsHabit): CreditRes
   const lastCogs = last && last.incomeKes ? last.expenseKes / last.incomeKes : 1;
   const prevCogs = prev && prev.incomeKes ? prev.expenseKes / prev.incomeKes : lastCogs;
   const squeeze = lastCogs > prevCogs + 0.05;
-  const expensePts = squeeze ? 12 : 16;
+  const concentrated = (extra?.topCostShare ?? 0) >= 0.45;
+  const expensePts = squeeze || concentrated ? 12 : 16;
 
   const voice = weeks.reduce((a, w) => a + w.voiceStockEvents, 0);
   const money = weeks.reduce((a, w) => a + w.smsStockOrLedger, 0);
@@ -100,9 +105,10 @@ export function scoreCredit(weeks: WeekRoll[], savings: SavingsHabit): CreditRes
       label: "Expense discipline",
       max: 20,
       points: expensePts,
-      reason: squeeze
-        ? "COGS/sales up vs prior week — feed concentration likely"
-        : "COGS/sales stable vs prior week",
+      reason:
+        squeeze || concentrated
+          ? "COGS/sales up or one cost line is concentrated (feed)"
+          : "COGS/sales stable vs prior week",
     },
     {
       id: "hygiene",

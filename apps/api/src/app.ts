@@ -2,7 +2,7 @@ import { serve } from "@hono/node-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { streamSSE } from "hono/streaming";
-import { seedDemo } from "@wantam/db";
+import { ensureSeeded, seedDemo } from "@wantam/db";
 import { downloadMedia, parseWebhook, sendText } from "@wantam/whatsapp";
 import { transcribeAudio } from "@wantam/stt";
 import { handleInboundText, handleVoiceTranscript, refreshShop } from "./shop";
@@ -101,11 +101,11 @@ app.post("/demo/reset", (c) => {
   seedDemo({ reset: true });
   refreshShop();
   bump();
-  return c.json({ ok: true, state: loadState() });
+  return c.json({ ok: true, text: "Demo reset. Mama Kuku Fresh is live.", state: loadState() });
 });
 
 export function boot() {
-  seedDemo({ reset: true });
+  ensureSeeded();
   refreshShop();
   bump();
   const port = Number(process.env.PORT ?? 3001);

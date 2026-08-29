@@ -12,7 +12,7 @@ import {
   stockEvent,
   traders,
 } from "@wantam/db";
-import { rebuildInsights, weekRolls, wowSales } from "@wantam/insights";
+import { costsBySku, rebuildInsights, salesBySku, weekRolls, wowSales } from "@wantam/insights";
 import {
   categorizeLedger,
   looksLikeMpesa,
@@ -26,26 +26,40 @@ import { bump } from "./events";
 
 const TRADER = () => process.env.DEMO_TRADER_ID ?? "mama-kuku";
 
-function reply(text: string, events: string[]): AgentReply {
-  const traderId = TRADER();
+function logChat(dir: "in" | "out", body: string) {
   getDb()
     .insert(outbox)
-    .values({ id: randomUUID(), traderId, body: text, at: Date.now() })
+    .values({ id: randomUUID(), traderId: TRADER(), dir, body, at: Date.now() })
     .run();
+}
+
+function reply(text: string, events: string[]): AgentReply {
+  logChat("out", text);
   bump();
   return { text, events };
+}
+
+function topCostShare(traderId: string): number {
+  const costs = costsBySku(traderId);
+  const total = costs.reduce((a, c) => a + c.kes, 0);
+  if (!total || !costs[0]) return 0;
+  return costs[0].kes / total;
 }
 
 export function refreshCredit(): void {
   const traderId = TRADER();
   const db = getDb();
   const save = db.select().from(savingsGoal).where(eq(savingsGoal.traderId, traderId)).get();
-  const result = scoreCredit(weekRolls(traderId), {
-    goalNamed: Boolean(save),
-    nudgesAccepted: save && save.balanceKes > 0 ? 1 : 0,
-    balanceKes: save?.balanceKes ?? 0,
-    targetKes: save?.targetKes ?? 0,
-  });
+  const result = scoreCredit(
+    weekRolls(traderId),
+    {
+      goalNamed: Boolean(save),
+      nudgesAccepted: save && save.balanceKes > 0 ? 1 : 0,
+      balanceKes: save?.balanceKes ?? 0,
+      targetKes: save?.targetKes ?? 0,
+    },
+    { topCostShare: topCostShare(traderId) },
+  );
   db.delete(creditSnapshot).where(eq(creditSnapshot.traderId, traderId)).run();
   db.insert(creditSnapshot)
     .values({
@@ -64,11 +78,6 @@ export function refreshShop(): void {
   refreshCredit();
 }
 
-function stockLine(): string {
-  const rows = getDb().select().from(sku).where(eq(sku.traderId, TRADER())).all();
-  return rows.map((s) => `${s.name}: ${s.onHand} ${s.unit}`).join(". ");
-}
-
 function applyDeltas(text: string): AgentReply {
   const db = getDb();
   const traderId = TRADER();
@@ -79,6 +88,7 @@ function applyDeltas(text: string): AgentReply {
   }
 
   const notes: string[] = [];
+  const today = new Date().toISOString().slice(0, 10);
   for (const intent of intents) {
     if (intent.kind === "ambiguous") {
       notes.push(intent.question);
@@ -87,7 +97,13 @@ function applyDeltas(text: string): AgentReply {
     const row = db.select().from(sku).where(eq(sku.id, intent.skuId)).get();
     if (!row) continue;
     const next = intent.kind === "set" ? intent.onHand : row.onHand + intent.delta;
-    db.update(sku).set({ onHand: next }).where(eq(sku.id, row.id)).run();
+    const lastPing = row.lowPingAt ? new Date(row.lowPingAt).toISOString().slice(0, 10) : null;
+    const lowNow = next <= row.lowStock;
+    const ping = lowNow && lastPing !== today;
+    db.update(sku)
+      .set({ onHand: next, lowPingAt: ping ? Date.now() : row.lowPingAt })
+      .where(eq(sku.id, row.id))
+      .run();
     db.insert(stockEvent)
       .values({
         id: randomUUID(),
@@ -102,7 +118,7 @@ function applyDeltas(text: string): AgentReply {
     notes.push(
       intent.kind === "set"
         ? `${row.name} iko ${next}.`
-        : `${row.name} ${next} ${row.unit}${next <= row.lowStock ? ` — ${row.name} inakwisha.` : "."}`,
+        : `${row.name} ${next} ${row.unit}${ping ? ` — ${row.name} inakwisha.` : "."}`,
     );
   }
 
@@ -163,6 +179,19 @@ function maybeNudge(): void {
       })
       .where(eq(savingsGoal.id, save.id))
       .run();
+    return;
+  }
+  const best = salesBySku(traderId)[0];
+  if (best && surplus >= 300) {
+    const row = db.select().from(sku).where(eq(sku.id, best.skuId)).get();
+    if (row && row.onHand <= row.lowStock) {
+      db.update(savingsGoal)
+        .set({
+          pendingNudge: `${row.name} inakwisha. Weka 300 kwa restock?`,
+        })
+        .where(eq(savingsGoal.id, save.id))
+        .run();
+    }
   }
 }
 
@@ -186,7 +215,7 @@ function handleConsent(text: string): AgentReply | null {
       ["consent_prompt"],
     );
   }
-  if (t === "HAPANA" && /revoke|stop|hapana/.test(text.toLowerCase())) {
+  if (t === "STOP" || t === "REVOKE" || /^stop\b/i.test(text)) {
     db.update(traders).set({ consentAt: null }).where(eq(traders.id, traderId)).run();
     db.insert(consentEvent)
       .values({ id: randomUUID(), traderId, kind: "revoked", channel: "whatsapp", at: Date.now() })
@@ -244,6 +273,7 @@ function shareCredit(): AgentReply {
 
 /** Shop agent: numbers in TypeScript, sentences as templates (LLM optional later). */
 export function handleInboundText(text: string): AgentReply {
+  logChat("in", text);
   const consent = handleConsent(text);
   if (consent) return consent;
 
@@ -258,6 +288,7 @@ export function handleInboundText(text: string): AgentReply {
 }
 
 export function handleVoiceTranscript(transcript: string): AgentReply {
+  logChat("in", transcript);
   const consent = handleConsent(transcript);
   if (consent && consent.events.includes("consent_prompt")) return consent;
   return applyDeltas(transcript);

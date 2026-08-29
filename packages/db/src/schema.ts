@@ -16,6 +16,7 @@ export const sku = sqliteTable("sku", {
   aliasesJson: text("aliases").notNull(),
   onHand: real("on_hand").notNull().default(0),
   lowStock: real("low_stock").notNull().default(2),
+  lowPingAt: integer("low_ping_at"),
 });
 
 export const stockEvent = sqliteTable("stock_event", {
@@ -88,6 +89,7 @@ export const creditShareLog = sqliteTable("credit_share_log", {
 export const outbox = sqliteTable("outbox", {
   id: text("id").primaryKey(),
   traderId: text("trader_id").notNull(),
+  dir: text("dir").notNull().default("out"),
   body: text("body").notNull(),
   at: integer("at").notNull(),
 });

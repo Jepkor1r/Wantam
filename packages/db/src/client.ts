@@ -53,7 +53,8 @@ function migrate(db: Database.Database) {
       unit TEXT NOT NULL,
       aliases TEXT NOT NULL,
       on_hand REAL NOT NULL DEFAULT 0,
-      low_stock REAL NOT NULL DEFAULT 2
+      low_stock REAL NOT NULL DEFAULT 2,
+      low_ping_at INTEGER
     );
     CREATE TABLE IF NOT EXISTS stock_event (
       id TEXT PRIMARY KEY,
@@ -118,10 +119,19 @@ function migrate(db: Database.Database) {
     CREATE TABLE IF NOT EXISTS outbox (
       id TEXT PRIMARY KEY,
       trader_id TEXT NOT NULL,
+      dir TEXT NOT NULL DEFAULT 'out',
       body TEXT NOT NULL,
       at INTEGER NOT NULL
     );
   `);
+  const skuCols = db.prepare("PRAGMA table_info(sku)").all() as { name: string }[];
+  if (!skuCols.some((c) => c.name === "low_ping_at")) {
+    db.exec("ALTER TABLE sku ADD COLUMN low_ping_at INTEGER");
+  }
+  const outCols = db.prepare("PRAGMA table_info(outbox)").all() as { name: string }[];
+  if (!outCols.some((c) => c.name === "dir")) {
+    db.exec("ALTER TABLE outbox ADD COLUMN dir TEXT NOT NULL DEFAULT 'out'");
+  }
 }
 
 export { schema } from "./schema";

@@ -1,4 +1,4 @@
-import { desc, eq } from "drizzle-orm";
+import { asc, desc, eq } from "drizzle-orm";
 import {
   creditShareLog,
   creditSnapshot,
@@ -9,10 +9,20 @@ import {
   sku,
   traders,
 } from "@wantam/db";
-import { latestInsights } from "@wantam/insights";
+import { latestInsights, weekRolls } from "@wantam/insights";
 import type { BoardState } from "@wantam/shared";
 
 const TRADER = () => process.env.DEMO_TRADER_ID ?? "mama-kuku";
+
+function officerCopy(score: number, band: string, factors: { label: string; points: number; max: number; reason: string }[]) {
+  const rolls = weekRolls(TRADER());
+  const surplus = rolls.filter((w) => w.incomeKes - w.expenseKes > 0).length;
+  const lines = factors.map((f) => `${f.label} ${f.points}/${f.max}`).join(" · ");
+  return {
+    officerSw: `Faili ya SACCO: ${score}/100 (${band}). Wiki ${rolls.length}, surplus ${surplus}. ${lines}. Hii si uamuzi wa mkopo — ni faili kwa afisa.`,
+    officerEn: `SACCO file: ${score}/100 (${band}). ${rolls.length} weeks logged, ${surplus} surplus. ${lines}. Not a loan decision — a file for a human officer.`,
+  };
+}
 
 export function loadState(): BoardState {
   const traderId = TRADER();
@@ -38,12 +48,18 @@ export function loadState(): BoardState {
     ? db.select().from(creditShareLog).where(eq(creditShareLog.snapshotId, snap.id)).get()
     : undefined;
   const save = db.select().from(savingsGoal).where(eq(savingsGoal.traderId, traderId)).get();
-  const lastMsg = db
+  const chat = db
     .select()
     .from(outbox)
     .where(eq(outbox.traderId, traderId))
-    .orderBy(desc(outbox.at))
-    .get();
+    .orderBy(asc(outbox.at))
+    .all()
+    .slice(-40);
+  const lastMsg = [...chat].reverse().find((m) => m.dir === "out");
+  const factors = snap
+    ? (JSON.parse(snap.factors) as { label: string; points: number; max: number; reason: string }[])
+    : [];
+  const officer = snap ? officerCopy(snap.score, snap.band, factors) : null;
 
   return {
     trader: {
@@ -80,8 +96,10 @@ export function loadState(): BoardState {
       ? {
           score: snap.score,
           band: snap.band,
-          factors: JSON.parse(snap.factors),
+          factors,
           shared: Boolean(share),
+          officerSw: officer!.officerSw,
+          officerEn: officer!.officerEn,
         }
       : null,
     savings: save
@@ -92,6 +110,12 @@ export function loadState(): BoardState {
           pendingNudge: save.pendingNudge,
         }
       : null,
+    chat: chat.map((m) => ({
+      id: m.id,
+      dir: (m.dir === "in" ? "in" : "out") as "in" | "out",
+      body: m.body,
+      at: m.at,
+    })),
     lastReply: lastMsg?.body ?? null,
     updatedAt: Date.now(),
   };

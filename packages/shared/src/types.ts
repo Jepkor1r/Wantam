@@ -28,6 +28,15 @@ export type BoardCredit = {
   band: string;
   factors: { id: string; label: string; max: number; points: number; reason: string }[];
   shared: boolean;
+  officerSw: string;
+  officerEn: string;
+};
+
+export type BoardChat = {
+  id: string;
+  dir: "in" | "out";
+  body: string;
+  at: number;
 };
 
 export type BoardSavings = {
@@ -45,6 +54,7 @@ export type BoardState = {
   insights: BoardInsight[];
   credit: BoardCredit | null;
   savings: BoardSavings | null;
+  chat: BoardChat[];
   lastReply: string | null;
   updatedAt: number;
 };

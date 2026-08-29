@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import type { BoardState } from "@wantam/shared";
 
 const VOICE = "nimeuza kuku tatu, mayai trays mbili";
@@ -20,8 +20,11 @@ export function Board() {
   const [state, setState] = useState<BoardState | null>(null);
   const [voice, setVoice] = useState(VOICE);
   const [sms, setSms] = useState(SMS);
+  const [chatInput, setChatInput] = useState("");
   const [flash, setFlash] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [busy, setBusy] = useState(false);
+  const scroller = useRef<HTMLDivElement>(null);
 
   const refresh = useCallback(async () => {
     try {
@@ -39,11 +42,28 @@ export function Board() {
     return () => clearInterval(t);
   }, [refresh]);
 
-  async function run(path: string, body: unknown, label: string) {
-    const r = await api<{ text: string }>(path, { method: "POST", body: JSON.stringify(body) });
-    setFlash(r.text);
-    await refresh();
-    void label;
+  useEffect(() => {
+    scroller.current?.scrollTo({ top: scroller.current.scrollHeight });
+  }, [state?.chat.length]);
+
+  async function run(path: string, body: unknown) {
+    setBusy(true);
+    try {
+      const r = await api<{ text: string }>(path, { method: "POST", body: JSON.stringify(body) });
+      setFlash(r.text);
+      await refresh();
+    } catch (e) {
+      setErr(e instanceof Error ? e.message : "Request failed");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function sendChat() {
+    const text = chatInput.trim();
+    if (!text) return;
+    setChatInput("");
+    await run("/demo/text", { text });
   }
 
   if (!state) {
@@ -57,7 +77,7 @@ export function Board() {
   const credit = state.credit;
 
   return (
-    <main className="mx-auto max-w-[1400px] space-y-4 p-4 md:p-6">
+    <main className="mx-auto max-w-[1500px] space-y-4 p-4 md:p-6">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-xs uppercase tracking-[0.25em] text-maize">Wantam · Duka</p>
@@ -93,7 +113,50 @@ export function Board() {
         })}
       </section>
 
-      <section className="grid gap-4 lg:grid-cols-3">
+      <section className="grid gap-4 lg:grid-cols-4">
+        <div className="card flex h-[520px] flex-col lg:col-span-1">
+          <h2 className="mb-2 font-display text-xl">WhatsApp</h2>
+          <div ref={scroller} className="min-h-0 flex-1 space-y-2 overflow-y-auto pr-1">
+            {state.chat.length === 0 ? (
+              <p className="text-sm text-amber-200/50">No messages yet. Send a voice line or SMS.</p>
+            ) : (
+              state.chat.map((m) => (
+                <div
+                  key={m.id}
+                  className={`max-w-[95%] rounded-2xl px-3 py-2 text-sm ${
+                    m.dir === "in"
+                      ? "ml-auto bg-leaf/30 text-emerald-50"
+                      : "bg-black/30 text-amber-50"
+                  }`}
+                >
+                  {m.body}
+                </div>
+              ))
+            )}
+          </div>
+          <form
+            className="mt-3 flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              void sendChat();
+            }}
+          >
+            <input
+              className="min-w-0 flex-1 rounded-full border border-amber-900/50 bg-black/30 px-3 py-2 text-sm"
+              placeholder="Type like WhatsApp…"
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+            />
+            <button
+              type="submit"
+              disabled={busy}
+              className="rounded-full bg-leaf px-3 py-2 text-sm font-medium text-white disabled:opacity-50"
+            >
+              Send
+            </button>
+          </form>
+        </div>
+
         <div className="card lg:col-span-1">
           <h2 className="mb-2 font-display text-xl">Ledger</h2>
           <ul className="space-y-2 text-sm">
@@ -125,7 +188,7 @@ export function Board() {
           )}
           <ul className="space-y-2">
             {state.insights.map((i) => (
-              <li key={i.type} className="rounded-xl bg-black/20 px-3 py-2 text-sm">
+              <li key={`${i.type}-${i.copyEn}`} className="rounded-xl bg-black/20 px-3 py-2 text-sm">
                 <span className="text-maize">{i.type.replaceAll("_", " ")}</span>
                 <span className="block">{i.copyEn}</span>
               </li>
@@ -160,6 +223,12 @@ export function Board() {
                   </li>
                 ))}
               </ul>
+              {credit.shared ? (
+                <div className="rounded-xl border border-leaf/40 bg-black/20 p-3 text-sm">
+                  <p>{credit.officerSw}</p>
+                  <p className="mt-2 text-amber-200/60">{credit.officerEn}</p>
+                </div>
+              ) : null}
             </>
           ) : (
             <p>No snapshot.</p>
@@ -181,8 +250,8 @@ export function Board() {
       <section className="card space-y-3">
         <h2 className="font-display text-xl">90-second demo (no WhatsApp keys required)</h2>
         <p className="text-sm text-amber-200/60">
-          Same loop as a voice note + forwarded SMS. API still exposes{" "}
-          <code>/webhooks/whatsapp</code> for Cloud API + ngrok.
+          Same loop as a voice note + forwarded SMS. Type in the WhatsApp pane, or use the buttons.
+          Cloud API webhook: <code>/webhooks/whatsapp</code>.
         </p>
         <div className="grid gap-3 md:grid-cols-2">
           <label className="block text-sm">
@@ -206,32 +275,44 @@ export function Board() {
         </div>
         <div className="flex flex-wrap gap-2">
           <button
-            className="rounded-full bg-maize px-4 py-2 font-medium text-soil"
-            onClick={() => run("/demo/voice", { transcript: voice }, "voice")}
+            disabled={busy}
+            className="rounded-full bg-maize px-4 py-2 font-medium text-soil disabled:opacity-50"
+            onClick={() => run("/demo/voice", { transcript: voice })}
           >
             Speak stock
           </button>
           <button
-            className="rounded-full bg-leaf px-4 py-2 font-medium text-white"
-            onClick={() => run("/demo/sms", { text: sms }, "sms")}
+            disabled={busy}
+            className="rounded-full bg-leaf px-4 py-2 font-medium text-white disabled:opacity-50"
+            onClick={() => run("/demo/sms", { text: sms })}
           >
             Paste SMS
           </button>
           <button
-            className="rounded-full border border-amber-200/40 px-4 py-2"
-            onClick={() => run("/demo/text", { text: "Share with SACCO" }, "share")}
+            disabled={busy}
+            className="rounded-full border border-amber-200/40 px-4 py-2 disabled:opacity-50"
+            onClick={() => run("/demo/text", { text: "Share with SACCO" })}
           >
             Share credit file
           </button>
           <button
-            className="rounded-full border border-amber-200/40 px-4 py-2"
-            onClick={() => run("/demo/text", { text: "NDIO" }, "ndio")}
+            disabled={busy}
+            className="rounded-full border border-amber-200/40 px-4 py-2 disabled:opacity-50"
+            onClick={() => run("/demo/text", { text: "NDIO" })}
           >
             NDIO save 500
           </button>
           <button
-            className="rounded-full border border-clay/50 px-4 py-2 text-clay"
-            onClick={() => run("/demo/reset", {}, "reset")}
+            disabled={busy}
+            className="rounded-full border border-amber-200/40 px-4 py-2 disabled:opacity-50"
+            onClick={() => run("/demo/text", { text: "HAPANA" })}
+          >
+            HAPANA
+          </button>
+          <button
+            disabled={busy}
+            className="rounded-full border border-clay/50 px-4 py-2 text-clay disabled:opacity-50"
+            onClick={() => run("/demo/reset", {})}
           >
             Reset demo
           </button>

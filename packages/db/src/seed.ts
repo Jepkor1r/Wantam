@@ -5,6 +5,7 @@ import {
   consentEvent,
   insightCard,
   ledgerEntry,
+  outbox,
   savingsGoal,
   sku,
   stockEvent,
@@ -77,12 +78,12 @@ export function seedDemo(opts?: { reset?: boolean }) {
       { skuId: "tomato", delta: -8 - week, source: "voice", daysAgo: base },
       { skuId: "kuku", delta: -4, source: "voice", daysAgo: base + 1 },
       { skuId: "mayai", delta: -2, source: "voice", daysAgo: base + 2 },
-      { skuId: "mahindi", delta: week === 1 ? 0 : -1, source: "voice", daysAgo: base + 3 },
+      { skuId: "mahindi", delta: week >= 2 ? -1 : 0, source: "voice", daysAgo: base + 3 },
       { skuId: "feed", delta: -1, source: "voice", daysAgo: base + 4 },
     );
     ledgerRows.push(
       {
-        amountKes: 4200 + week * 400,
+        amountKes: week === 0 ? 5500 : week === 1 ? 4200 : 3800 + (3 - week) * 200,
         dir: "in",
         category: "produce",
         skuId: "tomato",
@@ -106,7 +107,7 @@ export function seedDemo(opts?: { reset?: boolean }) {
         daysAgo: base + 2,
       },
       {
-        amountKes: week === 0 ? 3100 : 2400,
+        amountKes: 2400,
         dir: "out",
         category: "feed",
         skuId: "feed",
@@ -172,7 +173,23 @@ export function seedDemo(opts?: { reset?: boolean }) {
     })
     .run();
 
+  db.insert(outbox)
+    .values({
+      id: id(),
+      traderId: TRADER,
+      dir: "out",
+      body: "Sawa Mama Kuku. Duka iko live — voice notes kwa stock, SMS kwa pesa. Reply NDIO kama bado.",
+      at: weeksAgo(28),
+    })
+    .run();
+
   return { traderId: TRADER };
+}
+
+export function ensureSeeded() {
+  getSqlite();
+  const row = getSqlite().prepare("select id from traders limit 1").get();
+  if (!row) seedDemo({ reset: false });
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {
