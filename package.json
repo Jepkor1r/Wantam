@@ -1,0 +1,19 @@
+{
+  "name": "wantam",
+  "private": true,
+  "packageManager": "pnpm@10.33.3",
+  "scripts": {
+    "dev": "pnpm run --parallel --filter @wantam/api --filter @wantam/board dev",
+    "dev:api": "pnpm --filter @wantam/api dev",
+    "dev:board": "pnpm --filter @wantam/board dev",
+    "start": "pnpm run --parallel --filter @wantam/api --filter @wantam/board start",
+    "db:seed": "pnpm --filter @wantam/db seed",
+    "test": "pnpm --filter @wantam/api test && pnpm --filter @wantam/shared test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": ["better-sqlite3", "esbuild"]
+  }
+}

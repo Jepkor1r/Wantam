@@ -7,6 +7,23 @@ Voice, SMS, email, till files, POS, and M-Pesa all become the same shop events. 
 
 Remote: [github.com/Jepkor1r/Wantam](https://github.com/Jepkor1r/Wantam)
 
+## Run the app
+
+```bash
+pnpm install
+pnpm dev
+```
+
+- Judge board: [http://localhost:3000](http://localhost:3000)
+- Shop API: [http://localhost:3001/health](http://localhost:3001/health)
+- WhatsApp webhook: `POST http://localhost:3001/webhooks/whatsapp` (tunnel with ngrok)
+
+Copy `.env.example` to `.env` only when you have WhatsApp Cloud or Whisper keys.
+
+```bash
+pnpm test
+```
+
 ## Folder layout (this repo)
 
 ```text
